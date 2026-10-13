@@ -35,6 +35,13 @@ h2{font:600 1.15rem Prompt,Sarabun,sans-serif;margin:0 0 12px}
 .sg{flex:1;min-height:44px;border:0;border-radius:10px;background:none;color:var(--ink);font:600 1rem Sarabun,sans-serif;cursor:pointer}
 .sg[aria-selected="true"]{background:var(--btn);color:var(--btn-on)}
 .pn[hidden]{display:none}
+.stars{display:flex;justify-content:center;gap:2px;margin:8px 0 2px}
+.star{background:none;border:0;padding:4px;min-width:52px;min-height:52px;border-radius:12px;cursor:pointer}
+.star svg{display:block;margin:0 auto;fill:none;stroke:var(--btn);stroke-width:1.6;stroke-linejoin:round}
+.star.on svg{fill:var(--btn)}
+.star:focus-visible{outline:3px solid var(--pill);outline-offset:2px}
+.slb{display:flex;justify-content:space-between;color:var(--mute);font-size:.9rem;padding:0 10px}
+.rvc{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0}
 .btn{display:block;text-align:center;text-decoration:none;font:600 1rem Sarabun,sans-serif;background:var(--btn);color:var(--btn-on);border-radius:12px;padding:13px 16px}
 .btn:focus-visible{outline:3px solid var(--pill);outline-offset:3px}
 .btn.off{background:var(--line);color:var(--mute);cursor:not-allowed}
@@ -668,6 +675,7 @@ var $=function(i){return document.getElementById(i)};
 var HASH="975b4d10cf7f9b3764a5d585c3fa90a4b1b069c776126bc7fdd3de45d62fa99a";
 var GROUPS=[
 ["ผู้ช่วย AI",[["check_open","เปิดตัวตรวจคลิป AI"],["check_file","เลือกคลิปให้ AI ตรวจ"],["check_audio","กดตรวจเสียง"],["comp_open","เปิดตัวบีบอัดคลิป"],["comp_file","เลือกคลิปเพื่อบีบอัด"],["comp_start","กดเริ่มบีบอัด"],["comp_done","บีบอัดสำเร็จ"],["bot_open","เปิดแชทบอท"],["bot_q","ถามแชทบอท (ครั้ง)"],["bot_hit","แชทบอทตอบได้"],["bot_miss","แชทบอทตอบไม่ได้ (แจ้งเตือนอีเมลแล้ว)"],["staff_alert","ขอให้เจ้าหน้าที่ติดต่อกลับ"]]],
+["ผลตรวจ AI และความพึงพอใจ",[["ai_pass","AI ตรวจแล้วผ่านเบื้องต้น"],["ai_fail","AI ตรวจแล้วไม่ผ่าน"],["rate_5","ให้ 5 ดาว"],["rate_4","ให้ 4 ดาว"],["rate_3","ให้ 3 ดาว"],["rate_2","ให้ 2 ดาว"],["rate_1","ให้ 1 ดาว"],["rate_reason","ระบุเหตุผลที่ให้คะแนนต่ำ"]]],
 ["ข้อมูลการอบรม",[["steps4_open","เปิดหน้า 4 ขั้นตอน"],["demo_open","เปิดหน้าตัวอย่างวิดีโอ"],["yt_click","กดลิงก์ YouTube"],["retry_open","เปิดหน้ากรณีสอบไม่ผ่าน"]]],
 ["ส่งงานและติดต่อ",[["form_click","กดไปฟอร์มส่งการบ้าน"],["allhw_click","กดเข้า All Homework"],["staff_open","เปิดช่องทางติดต่อเจ้าหน้าที่"]]]];
 var unlocked=false,pw="";
@@ -748,7 +756,9 @@ function render(s){
  var hs=s.hours||{},hl=[],hv=[],hi;for(hi=0;hi<24;hi++){hl.push(String(hi));hv.push(hs[hi]||0)}
  h+='<div class="card"><h3>ช่วงเวลาที่เข้าเว็บ (ชั่วโมงของวัน)</h3>'+svgBars(hl,[{n:"",c:"var(--btn)",v:hv}],"กราฟช่วงเวลาที่เข้าเว็บ")+'</div>';
  var mx=1;GROUPS.forEach(function(gp){gp[1].forEach(function(e){if(g(e[0])>mx)mx=g(e[0])})});
- h+='<div class="card"><h3>การกดใช้งานแต่ละฟังก์ชัน</h3>';
+ var rt=[1,2,3,4,5].map(function(k){return g("rate_"+k)}),rc=rt.reduce(function(a,b){return a+b},0),ra=rc?rt.reduce(function(a,v,i){return a+v*(i+1)},0)/rc:0;
+  h+='<div class="card"><h3>ความพึงพอใจต่อ AI ตรวจคลิป</h3><p style="margin:0;font-size:1.5rem;font-weight:600">'+(rc?ra.toFixed(1)+' / 5 ดาว':'ยังไม่มีคะแนน')+'</p><p class="fine" style="margin:4px 0 0">จากการให้คะแนน '+rc+' ครั้ง</p></div>';
+  h+='<div class="card"><h3>การกดใช้งานแต่ละฟังก์ชัน</h3>';
  GROUPS.forEach(function(gp){h+='<div class="grp">'+gp[0]+'</div>';gp[1].forEach(function(e){var v=g(e[0]);h+='<div class="brw"><span class="n">'+e[1]+'</span><span class="b"><i style="width:'+(v/mx*100)+'%"></i></span><span class="c">'+v+'</span></div>'})});
  h+='</div>';
  var tp=Object.keys(s.topics||{}).map(function(k){return[k,s.topics[k]]}).sort(function(a,b){return b[1]-a[1]}).slice(0,10),Q=window.__KBQ||{};
@@ -889,6 +899,7 @@ async function run(){
   (pass?'<a class="btn" style="margin-top:10px" target="_blank" rel="noopener noreferrer" href="'+FORM+'">ผ่านเบื้องต้น ไปส่งการบ้าน</a>':
   '');
  if(window.track)window.track(pass?"ai_pass":"ai_fail");
+ document.dispatchEvent(new CustomEvent("aidone",{detail:{pass:pass}}));
  btn.disabled=false}
 $("aiGo").onclick=run;
 $("vf").addEventListener("change",function(){var f=this.files[0];vid.dataset.n=f?f.name:"";$("aiOut").innerHTML="";$("aiBar").style.width="0"});
@@ -900,6 +911,39 @@ var tb=[].slice.call(document.querySelectorAll(".tb"));
 function sel(i,f){tb.forEach(function(b,k){var on=k===i;b.setAttribute("aria-selected",on?"true":"false");b.tabIndex=on?0:-1;var p=document.getElementById("pn"+(k+1));if(p)p.hidden=!on});if(f)tb[i].focus()}
 tb.forEach(function(b,i){b.onclick=function(){sel(i)};
  b.onkeydown=function(e){if(e.key==="ArrowRight"){e.preventDefault();sel((i+1)%tb.length,1)}else if(e.key==="ArrowLeft"){e.preventDefault();sel((i+tb.length-1)%tb.length,1)}}});
+})();
+</script>
+<div id="rv" class="ov" hidden role="dialog" aria-modal="true" aria-labelledby="rvt"><div class="sheet" style="text-align:center">
+<h2 id="rvt" style="margin-bottom:4px">พอใจตัวช่วย AI แค่ไหน?</h2>
+<p class="lead" id="rvs" style="margin:0 0 4px">แตะดาวเพื่อให้คะแนน 1 ถึง 5 ใช้เวลาไม่ถึงครึ่งนาที</p>
+<div class="stars" id="rvst" role="group" aria-label="ให้คะแนนความพึงพอใจ"><button type="button" class="star" data-n="1" aria-label="1 ดาว"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></button><button type="button" class="star" data-n="2" aria-label="2 ดาว"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></button><button type="button" class="star" data-n="3" aria-label="3 ดาว"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></button><button type="button" class="star" data-n="4" aria-label="4 ดาว"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></button><button type="button" class="star" data-n="5" aria-label="5 ดาว"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></button></div>
+<div class="slb" id="rvl"><span>ไม่พอใจเลย</span><span>พอใจมาก</span></div>
+<div id="rvr" hidden><p class="fine" style="margin:12px 0 0">ไม่พอใจเรื่องอะไร (ไม่บังคับ)</p><div class="rvc"><button type="button" class="mini" data-r="ผลไม่ตรงกับที่ทำจริง">ผลไม่ตรงกับที่ทำจริง</button><button type="button" class="mini" data-r="ใช้งานยาก">ใช้งานยาก</button><button type="button" class="mini" data-r="ช้าหรือค้าง">ช้าหรือค้าง</button><button type="button" class="mini" data-r="อ่านข้อความไม่เข้าใจ">อ่านข้อความไม่เข้าใจ</button><button type="button" class="mini" data-r="อื่นๆ">อื่นๆ</button></div></div>
+<p id="rvth" role="status" style="margin:12px 0 0;font-weight:600" hidden></p>
+<button class="mini" id="rvx" type="button" style="margin-top:12px">ไว้ทีหลัง</button>
+</div></div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)},ov=$("rv"),last=null,res=null,n0=0,tm=null;
+function st(k,v,sess){try{var o=sess?window.sessionStorage:window.localStorage;if(v===undefined)return o.getItem(k);o.setItem(k,v)}catch(e){return null}}
+function can(){var t=+st("tio_rate_at");if(t&&Date.now()-t<6048e5)return false;return !st("tio_rate_skip",undefined,true)}
+function tr(e,m,x){if(window.track)window.track(e,m,x)}
+function paint(n){[].forEach.call(document.querySelectorAll("#rvst .star"),function(b){b.classList.toggle("on",+b.dataset.n<=n)})}
+function open(){n0=0;paint(0);$("rvr").hidden=true;$("rvth").hidden=true;$("rvst").hidden=false;$("rvl").hidden=false;$("rvs").hidden=false;$("rvx").hidden=false;
+ last=document.activeElement;ov.hidden=false;var f=document.querySelector("#rvst .star");if(f)f.focus()}
+function close(skip){clearTimeout(tm);ov.hidden=true;if(skip)st("tio_rate_skip","1",true);if(last&&last.focus)try{last.focus()}catch(e){}}
+function thanks(t){$("rvr").hidden=true;$("rvs").hidden=true;$("rvl").hidden=true;$("rvth").textContent=t;$("rvth").hidden=false;$("rvx").hidden=false;$("rvx").textContent="ปิด"}
+document.addEventListener("aidone",function(e){res=e.detail||{};if(!can())return;
+ setTimeout(function(){var c=$("check");if(c&&!c.hidden&&ov.hidden){$("rvx").textContent="ไว้ทีหลัง";open()}},1800)});
+$("rvst").addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".star");if(!b)return;
+ n0=+b.dataset.n;paint(n0);tr("rate_"+n0,"",res&&res.pass?"pass":"fail");st("tio_rate_at",String(Date.now()));
+ $("rvst").hidden=true;
+ if(n0<=3){$("rvs").hidden=true;$("rvl").hidden=true;$("rvr").hidden=false;$("rvth").textContent="ขอบคุณสำหรับคะแนน";$("rvth").hidden=false;$("rvx").textContent="ข้าม"}
+ else thanks("ขอบคุณที่ให้คะแนน")});
+$("rvr").addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-r]");if(!b)return;tr("rate_reason",b.dataset.r,String(n0));thanks("ขอบคุณ เราจะนำไปปรับปรุง")});
+$("rvx").onclick=function(){close(n0===0)};
+ov.addEventListener("click",function(e){if(e.target===ov)close(n0===0)});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!ov.hidden)close(n0===0)});
 })();
 </script>
 </body>
